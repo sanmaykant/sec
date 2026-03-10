@@ -1,4 +1,5 @@
 import requests
+from edgar import Company, set_identity, CompanyNotFoundError
 
 
 class EdgarService:
@@ -8,6 +9,14 @@ class EdgarService:
     HEADERS = {
         "User-Agent": "sec-analyzer research@example.com"
     }
+
+    def fetch_date_range(self, ticker: str, form: str):
+        set_identity("your.name@example.com")
+        try:
+            company = Company(ticker)
+            return company.get_filings(form=form).date_range
+        except CompanyNotFoundError as e:
+            raise e
 
     def get_company_submissions(self, cik: str):
         """
