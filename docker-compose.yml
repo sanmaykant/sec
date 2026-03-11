@@ -8,9 +8,30 @@ services:
     ports:
       - "6379:6379"
 
-  worker:
+  fetch_worker:
     build: .
-    command: celery -A app.core.celery_app worker -Q fetch_queue --loglevel=info -c 1
+    # command: celery -A app.core.celery_app worker -Q fetch_queue --loglevel=info -c 1
+    command: python workers/fetch_worker.py
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  extract_worker:
+    build: .
+    command: python workers/extract_worker.py
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  embed_worker:
+    build: .
+    command: python workers/embed_worker.py
     volumes:
       - .:/app
     environment:

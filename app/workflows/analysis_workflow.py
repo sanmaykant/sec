@@ -1,19 +1,20 @@
 import uuid
+import time
 import logging
+
 from celery import chain, group, chord
 
 from app.tasks.fetch_tasks import fetch_filing
-# from app.tasks.parse_tasks import parse_risk_section
-# from app.tasks.embed_tasks import embed_chunks
-# from app.tasks.similarity_tasks import compute_similarity
-
+from app.tasks.embedding_task import embed_text
 from app.services.edgar_service import EdgarService
 
 
 my_logger = logging.getLogger("my_app_logger")
-my_logger.setLevel(logging.WARNING)
+my_logger.setLevel(logging.INFO)
 
 def start_analysis(ticker: str):
+
+    my_logger.info(f"Analysis begun for ticker {ticker}")
 
     job_id = str(uuid.uuid4())
 
@@ -21,18 +22,27 @@ def start_analysis(ticker: str):
     date_range = service.fetch_date_range(ticker=ticker, form="10-K")
     my_logger.debug(f"Date range for ticker {ticker} : {date_range}")
 
-    tasks = []
+    pipelines = []
 
     for year in range(date_range[0].year, date_range[1].year + 1):
         my_logger.debug(f"Dispatching task for ticker {ticker} and year {year}")
 
-        task = fetch_filing.s(job_id, ticker, year, "10-K")
+        pipeline = chain(
+                fetch_filing.s(job_id, ticker, year, "10-K", "part_i_item_1a"),
+                embed_text.s()
+                )
 
-        tasks.append(task)
+        pipelines.append(pipeline)
 
-    my_logger.debug(f"Total number of tasks for ticker {ticker} : {len(tasks)}")
-    job = group(tasks)
+    my_logger.debug(f"Total number of tasks for ticker {ticker} : {len(pipelines)}")
+    job = group(pipelines)
+
+    start_time = time.time()
 
     result = job.apply_async()
+    outputs = result.get()
+
+    duration = time.time() - start_time
+    my_logger.info(f"All pipelines completed in {duration:.2f} seconds")
 
     return job_id
