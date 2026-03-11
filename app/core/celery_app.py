@@ -14,4 +14,7 @@ celery_app.conf.update(
     task_track_started=True
 )
 
-celery_app.autodiscover_tasks(["app.tasks.fetch_tasks", "app.tasks.extraction_tasks"])
+celery_app.autodiscover_tasks([
+    "app.tasks.fetch_tasks",
+    "app.tasks.extraction_tasks"
+])

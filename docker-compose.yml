@@ -29,13 +29,12 @@ services:
     depends_on:
       - redis
 
-  embed_worker:
-    build: .
-    command: python workers/embed_worker.py
-    volumes:
-      - .:/app
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
-      
+#  embed_worker:
+#    build: .
+#    command: python workers/embed_worker.py
+#    volumes:
+#      - .:/app
+#    environment:
+#      - REDIS_URL=redis://redis:6379/0
+#    depends_on:
+#      - redis

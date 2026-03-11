@@ -8,5 +8,5 @@ if __name__ == "__main__":
         "-Q",
         "fetch_queue",
         "-c",
-        "4"
+        "8"
     ])
