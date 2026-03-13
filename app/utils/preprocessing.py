@@ -57,8 +57,8 @@ def remove_embedding_similar_boilerplate(sentences, known_boilerplate, model, si
     """
     if not known_boilerplate or not sentences:
         return sentences
-    emb_sentences = model.encode(sentences, convert_to_tensor=True, batch_size=256)
-    emb_boilerplate = model.encode(known_boilerplate, convert_to_tensor=True, batch_size=256)
+    emb_sentences = model.encode(sentences, convert_to_tensor=True, batch_size=32)
+    emb_boilerplate = model.encode(known_boilerplate, convert_to_tensor=True, batch_size=32)
     filtered = []
     for i, s_emb in enumerate(emb_sentences):
         sims = util.cos_sim(s_emb, emb_boilerplate)
@@ -82,6 +82,6 @@ def preprocess_risk_section(text, model):
     sentences = remove_low_tfidf_sentences(sentences, top_fraction=0.7)
 
     # 4. Embedding-based known boilerplate removal
-    # sentences = remove_embedding_similar_boilerplate(sentences, KNOWN_BOILERPLATE, model, similarity_threshold=0.85)
+    sentences = remove_embedding_similar_boilerplate(sentences, KNOWN_BOILERPLATE, model, similarity_threshold=0.85)
 
     return sentences

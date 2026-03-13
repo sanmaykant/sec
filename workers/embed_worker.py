@@ -7,6 +7,7 @@ if __name__ == "__main__":
         "--loglevel=info",
         "-Q",
         "embed_queue",
+        "--pool=threads",
         "-c",
         "2"
     ])

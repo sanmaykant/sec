@@ -10,7 +10,7 @@ os.environ["HF_HUB_OFFLINE"] = "1"
 model = SentenceTransformer(
         "sentence-transformers/all-mpnet-base-v2",
         revision="e8c3b32edf5434bc2275fc9bab85f82640a19130",
-        local_files_only=True)
+        local_files_only=True, device="cuda")
 
 @celery_app.task(
     queue="embed_queue",
@@ -29,7 +29,7 @@ def embed_text(ctx):
 
     logger.info("Embedding text")
     # sentences = [ctx["filing"]]
-    embeddings = model.encode(sentences, convert_to_tensor=True, batch_size=64)
+    embeddings = model.encode(sentences, convert_to_tensor=True, batch_size=32)
     logger.info(f"Embedded text {embeddings}")
 
     return {
