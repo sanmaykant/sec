@@ -8,5 +8,5 @@ if __name__ == "__main__":
         "-Q",
         "embed_queue",
         "-c",
-        "8"
+        "2"
     ])
