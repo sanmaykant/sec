@@ -5,7 +5,7 @@ import logging
 from celery import chain, group, chord
 
 from app.tasks.fetch_tasks import fetch_filing
-from app.tasks.extraction_tasks import extract_section
+from app.tasks.embedding_tasks import embed_text
 from app.services.edgar_service import EdgarService
 
 
@@ -29,7 +29,7 @@ def start_analysis(ticker: str):
 
         pipeline = chain(
                 fetch_filing.s(job_id, ticker, year, "10-K", "part_i_item_1a"),
-                extract_section.s()
+                embed_text.s()
                 )
 
         pipelines.append(pipeline)
