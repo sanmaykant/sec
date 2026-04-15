@@ -32,6 +32,7 @@ def embed_text(ctx):
     embeddings = model.encode(sentences, convert_to_tensor=True, batch_size=32)
     logger.info(f"Embedded text {embeddings}")
 
-    return {
-        "embeddings": ctx["filing"],
-    }
+    ctx["embeddings"] = embeddings.tolist()
+    ctx["chunks"] = sentences
+
+    return ctx

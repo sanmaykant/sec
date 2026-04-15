@@ -1,6 +1,7 @@
 import uuid
 import time
 import logging
+import os
 
 from celery import chain, group, chord
 
@@ -11,6 +12,50 @@ from app.services.edgar_service import EdgarService
 
 my_logger = logging.getLogger("my_app_logger")
 my_logger.setLevel(logging.INFO)
+
+import json
+
+def prettify_output(outputs, max_sentence_length=100, max_embedding_length=10):
+    pretty_output = []
+    
+    for obj in outputs:
+        if obj.get("status") != "success":
+            continue
+        
+        chunks = obj.get("chunks", [])
+        embeddings = obj.get("embeddings", [])
+        
+        truncated_chunks = []
+        truncated_embeddings = []
+        
+        for chunk, emb in zip(chunks, embeddings):
+            if len(chunk) > max_sentence_length:
+                chunk = chunk[:max_sentence_length] + "..."
+            truncated_chunks.append(chunk)
+            
+            if len(emb) > max_embedding_length:
+                emb = emb[:max_embedding_length] + ["..."]
+            truncated_embeddings.append(emb)
+        
+        pretty_obj = {
+            "chunks": truncated_chunks,
+            "embeddings": truncated_embeddings,
+            "year": obj.get("year", "Unknown")
+        }
+        
+        pretty_output.append(pretty_obj)
+    
+    # print(json.dumps(pretty_output, indent=2))
+    print(len(pretty_output))
+    for out in pretty_output:
+        print(out["year"])
+    for out in outputs:
+        if "filing" not in out or out.get("filing", "").strip() == "":
+            continue
+        dir_path = f"outputs/{out['ticker']}"
+        os.makedirs(dir_path, exist_ok=True)
+        with open(f"outputs/{out["ticker"]}/{out["year"]}", "w") as file:
+            file.write(out["filing"])
 
 def start_analysis(ticker: str):
 
@@ -44,5 +89,8 @@ def start_analysis(ticker: str):
 
     duration = time.time() - start_time
     my_logger.info(f"All pipelines completed in {duration:.2f} seconds")
+
+    # my_logger.info(f"Embeddings: {outputs}")
+    prettify_output(outputs)
 
     return job_id
