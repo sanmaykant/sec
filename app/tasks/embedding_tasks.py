@@ -29,6 +29,7 @@ def embed_text(ctx):
 
     text = preprocess_text(ctx["filing"])
     chunks = chunk_text(text)
+    logger.info(f"Number of chunks: {len(chunks)}, year: {ctx.get('year')}")
 
     if not chunks:
         return { "embeddings": [] }

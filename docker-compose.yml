@@ -64,3 +64,21 @@ services:
     depends_on:
       - redis
     gpus: all
+
+  api:
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - fetch_worker
+      - embed_worker
+      - topic_worker
+      - analysis_worker
+    gpus:
+      all

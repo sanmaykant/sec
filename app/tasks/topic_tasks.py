@@ -43,9 +43,18 @@ def topic_modelling(outputs):
     year1 = min(outputs[0].get("year"), outputs[1].get("year"))
     year2 = max(outputs[0].get("year"), outputs[1].get("year"))
 
+    year1_out = list(filter(lambda ctx : ctx.get("year") == year1, outputs))[0]
+    year2_out = list(filter(lambda ctx : ctx.get("year") == year2, outputs))[0]
+
     # dr = disappearing_risks(outputs)
     dr = disappearing_with_drop(outputs)
     logger.info("Analysis over")
     logger.info(dr)
 
-    return dr
+    final_output = {
+            "ticker": ticker,
+            "analysis": [year1_out, year2_out],
+            "dr": dr
+            }
+
+    return final_output
