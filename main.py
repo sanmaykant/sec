@@ -42,7 +42,7 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from app.workflows.analysis_workflow import dr_analysis
+from app.workflows.disappearing_risks import dr_analysis
 
 app = FastAPI(title="SEC Analysis API")
 
