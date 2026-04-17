@@ -63,19 +63,18 @@ def dr_analysis(ticker: str, year: int):
     # Define the parallel embedding tasks
     # We don't use chain() inside the group here because we want 
     # the results to flow into the chord callback.
-    header = [
-        chain(
-            fetch_filing.s(job_id, ticker, year, "10-K", "part_i_item_1a"), 
-            embed_text.s()
-        ),
-        chain(
-            fetch_filing.s(job_id, ticker, year + 1, "10-K", "part_i_item_1a"), 
-            embed_text.s()
+
+    header = []
+    for y in range(2021, year+1):
+        header.append(
+            chain(
+                fetch_filing.s(job_id, ticker, y, "10-K", "part_i_item_1a"), 
+                embed_text.s()
+            )
         )
-    ]
 
     # The 'callback' is our topic modelling worker
-    callback = topic_modelling.s()
+    callback = topic_modelling.s(year)
 
     start_time = time.time()
 

@@ -9,7 +9,7 @@ from app.utils.analysis import disappearing_risks, disappearing_with_drop
     retry_backoff=True,
     retry_kwargs={"max_retries": 3}
 )
-def topic_modelling(outputs):
+def topic_modelling(outputs, target_year):
     """
     Receives a LIST of contexts from the group of embed_text tasks.
     outputs = [ctx_year_1, ctx_year_2]
@@ -34,27 +34,23 @@ def topic_modelling(outputs):
         ctx["topics"] = topics.tolist() # pyright: ignore
         ctx["topic_probs"] = probs.tolist() if probs is not None else []
 
-        # del ctx["embeddings"]
-        # del ctx["chunks"]
-
     logger.info("Analysis beginning")
 
-    ticker = outputs[0].get("ticker")
-    year1 = min(outputs[0].get("year"), outputs[1].get("year"))
-    year2 = max(outputs[0].get("year"), outputs[1].get("year"))
+    rel_years = list(filter(lambda ctx : ctx.get("year") != target_year, outputs))
+    target_year = list(filter(lambda ctx : ctx.get("year") == target_year, outputs))[0]
+    drs = []
+    for ctx in rel_years:
+        dr = disappearing_with_drop([ctx, target_year])
+        drs.append(dr)
 
-    year1_out = list(filter(lambda ctx : ctx.get("year") == year1, outputs))[0]
-    year2_out = list(filter(lambda ctx : ctx.get("year") == year2, outputs))[0]
+    ticker = target_year.get("ticker")
 
-    # dr = disappearing_risks(outputs)
-    dr = disappearing_with_drop(outputs)
     logger.info("Analysis over")
-    logger.info(dr)
 
     final_output = {
             "ticker": ticker,
-            "analysis": [year1_out, year2_out],
-            "dr": dr
+            "analysis": list(zip(rel_years, drs)),
+            "target_year": target_year,
             }
 
     return final_output
