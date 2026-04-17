@@ -1,3 +1,6 @@
+import gc
+import torch
+
 from app.core.config import logger
 from app.core.celery_app import celery_app
 from sentence_transformers import SentenceTransformer
@@ -36,5 +39,11 @@ def embed_text(ctx):
 
     ctx["embeddings"] = embeddings.tolist()
     ctx["chunks"] = chunks
+
+# Explicitly cleanup
+    del embeddings 
+    gc.collect() # Trigger Python garbage collection
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache() # Release unused VRAM back to the GPU
 
     return ctx

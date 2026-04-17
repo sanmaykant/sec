@@ -47,3 +47,20 @@ services:
     depends_on:
       - redis
     gpus: all
+    
+  analysis_worker:
+    build: .
+    command: python workers/analysis_worker.py
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - NUMBA_DISABLE_JIT=1              # Force disable JIT
+      - PYTHONASYNCIODEBUG=0
+      - OMP_NUM_THREADS=1                # Prevent low-level library parallelization
+      - MKL_NUM_THREADS=1
+      - NUMBA_NUM_THREADS=1
+      - OPENBLAS_NUM_THREADS=1
+    depends_on:
+      - redis
+    gpus: all

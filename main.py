@@ -20,7 +20,5 @@ from app.workflows.analysis_workflow import dr_analysis
 import json
 
 result = dr_analysis("AAPL", 2023)
-print(result[0].get("topics"))
-with open("output.json", "w") as file:
-    json.dump(result, file)
+print(result)
 # print(result)

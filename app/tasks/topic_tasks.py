@@ -1,38 +1,7 @@
 from app.core.config import logger
 from app.core.celery_app import celery_app
-
-from bertopic import BERTopic
-
-bert_topic_model = None
-MODEL_PATH = "models/bertopic_model"
-
-def get_bert_model():
-    global bert_topic_model
-    if bert_topic_model is not None:
-        return bert_topic_model
-
-    try:
-        # 1. Load the model without the heavy transformer
-        model = BERTopic.load(MODEL_PATH, embedding_model=None)
-
-        # 2. Safety check for set_params
-        # Only set n_jobs if it's a real UMAP/Parametric model, 
-        # not the 'BaseDimensionalityReduction' placeholder
-        if hasattr(model, "umap_model"):
-            # Check specifically if set_params exists on the instance
-            set_params_func = getattr(model.umap_model, "set_params", None)
-            if callable(set_params_func):
-                model.umap_model.set_params(n_jobs=1)
-                logger.info("UMAP n_jobs set to 1.")
-
-        bert_topic_model = model
-        return bert_topic_model
-
-    except Exception as e:
-        # This logger is vital to see exactly why it failed in Celery logs
-        logger.error(f"Error loading model: {str(e)}")
-        return None
-
+from app.utils.load_model import get_bert_model
+from app.utils.analysis import disappearing_risks, disappearing_with_drop
 
 @celery_app.task(
     queue="topic_queue",
@@ -46,7 +15,9 @@ def topic_modelling(outputs):
     outputs = [ctx_year_1, ctx_year_2]
     """
     topic_model = get_bert_model()
-    
+    if topic_model is None:
+        raise Exception("Cannot load bertopic model")
+
     for ctx in outputs:
         if ctx.get("status") != "success":
             continue
@@ -60,10 +31,21 @@ def topic_modelling(outputs):
         topics, probs = topic_model.transform(chunks, embeddings=embeddings)
 
         # Attach results
-        ctx["topics"] = topics.tolist()
+        ctx["topics"] = topics.tolist() # pyright: ignore
         ctx["topic_probs"] = probs.tolist() if probs is not None else []
 
         # del ctx["embeddings"]
-        del ctx["chunks"]
+        # del ctx["chunks"]
 
-    return outputs
+    logger.info("Analysis beginning")
+
+    ticker = outputs[0].get("ticker")
+    year1 = min(outputs[0].get("year"), outputs[1].get("year"))
+    year2 = max(outputs[0].get("year"), outputs[1].get("year"))
+
+    # dr = disappearing_risks(outputs)
+    dr = disappearing_with_drop(outputs)
+    logger.info("Analysis over")
+    logger.info(dr)
+
+    return dr

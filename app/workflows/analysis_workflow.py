@@ -14,8 +14,6 @@ from app.services.edgar_service import EdgarService
 my_logger = logging.getLogger("my_app_logger")
 my_logger.setLevel(logging.INFO)
 
-import json
-
 def prettify_output(outputs, max_sentence_length=100, max_embedding_length=10):
     pretty_output = []
     
