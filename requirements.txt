@@ -1,3 +1,7 @@
+numba>=0.57.0
+llvmlite>=0.40.0
+umap-learn>=0.5.4
+numpy<2.0.0
 fastapi
 uvicorn
 celery
@@ -5,3 +9,5 @@ redis
 requests
 python-dotenv
 edgartools
+bertopic
+hdbscan

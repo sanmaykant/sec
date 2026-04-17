@@ -16,5 +16,6 @@ celery_app.conf.update(
 
 celery_app.autodiscover_tasks([
     "app.tasks.fetch_tasks",
-    "app.tasks.embedding_tasks"
+    "app.tasks.embedding_tasks",
+    "app.tasks.topic_tasks"
 ])

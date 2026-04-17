@@ -1,7 +1,7 @@
 from app.core.config import logger
 from app.core.celery_app import celery_app
 from sentence_transformers import SentenceTransformer
-from app.utils.preprocessing import preprocess_risk_section
+from app.utils.preprocessing import preprocess_text, chunk_text
 
 
 import os
@@ -23,16 +23,18 @@ def embed_text(ctx):
         return ctx
 
     logger.info("Processing text")
-    sentences = preprocess_risk_section(ctx["filing"], model)
-    if not sentences:
+
+    text = preprocess_text(ctx["filing"])
+    chunks = chunk_text(text)
+
+    if not chunks:
         return { "embeddings": [] }
 
     logger.info("Embedding text")
-    # sentences = [ctx["filing"]]
-    embeddings = model.encode(sentences, convert_to_tensor=True, batch_size=32)
+    embeddings = model.encode(chunks, convert_to_tensor=True, batch_size=32)
     logger.info(f"Embedded text {embeddings}")
 
     ctx["embeddings"] = embeddings.tolist()
-    ctx["chunks"] = sentences
+    ctx["chunks"] = chunks
 
     return ctx

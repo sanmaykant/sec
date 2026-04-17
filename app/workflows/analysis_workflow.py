@@ -7,6 +7,7 @@ from celery import chain, group, chord
 
 from app.tasks.fetch_tasks import fetch_filing
 from app.tasks.embedding_tasks import embed_text
+from app.tasks.topic_tasks import topic_modelling
 from app.services.edgar_service import EdgarService
 
 
@@ -56,6 +57,40 @@ def prettify_output(outputs, max_sentence_length=100, max_embedding_length=10):
         os.makedirs(dir_path, exist_ok=True)
         with open(f"outputs/{out["ticker"]}/{out["year"]}", "w") as file:
             file.write(out["filing"])
+
+def dr_analysis(ticker: str, year: int):
+    job_id = str(uuid.uuid4())
+    my_logger.info(f"Analysis begun for ticker {ticker}")
+
+    # Define the parallel embedding tasks
+    # We don't use chain() inside the group here because we want 
+    # the results to flow into the chord callback.
+    header = [
+        chain(
+            fetch_filing.s(job_id, ticker, year, "10-K", "part_i_item_1a"), 
+            embed_text.s()
+        ),
+        chain(
+            fetch_filing.s(job_id, ticker, year + 1, "10-K", "part_i_item_1a"), 
+            embed_text.s()
+        )
+    ]
+
+    # The 'callback' is our topic modelling worker
+    callback = topic_modelling.s()
+
+    start_time = time.time()
+
+    # Chord: Parallel Header -> Single Callback
+    result = chord(header)(callback)
+    
+    # This will wait until BOTH embeddings AND the topic modelling are done
+    final_output = result.get()
+
+    duration = time.time() - start_time
+    my_logger.info(f"Full pipeline (Embed -> Topic) completed in {duration:.2f} seconds")
+    
+    return final_output
 
 def start_analysis(ticker: str):
 
