@@ -1,3 +1,4 @@
+import pandas as pd
 import requests
 from app.core.config import logger
 from bertopic import BERTopic
@@ -56,4 +57,32 @@ def get_bert_model():
     except Exception as e:
         # This logger is vital to see exactly why it failed in Celery logs
         logger.error(f"Error loading model: {str(e)}")
+        return None
+
+
+_shared_data = None
+DATA_PATH = "models/bertopic_model/topic_info - topic_info.csv"
+
+def get_topic_data():
+    global _shared_data
+    
+    # 1. Return immediately if already loaded
+    if _shared_data is not None:
+        return _shared_data
+
+    try:
+        # 2. Load the CSV
+        # Use specific columns if you don't need the whole file to save memory
+        df = pd.read_csv(DATA_PATH)
+
+        # Optional: Add any initial processing here 
+        # (e.g., setting an index or dropping irrelevant columns)
+        # df = df.set_index("id") 
+        
+        _shared_data = df
+        logger.info("CSV data loaded successfully into memory.")
+        return _shared_data
+
+    except Exception as e:
+        logger.error(f"Error loading CSV data: {str(e)}")
         return None
